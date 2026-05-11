@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Corpoelec · Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #080c14;
+  --sidebar: #0a0f1e;
+  --card: #111827;
+  --card2: #161e30;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.12);
+  --text: #eef0f7;
+  --text2: #7c849e;
+  --text3: #454d66;
+  --accent: #1a6de0;
+  --accent2: #2980f5;
+  --accent-glow: rgba(26,109,224,0.2);
+  --accent-light: rgba(26,109,224,0.1);
+  --success: #2ecc71;
+  --success-light: rgba(46,204,113,0.1);
+  --warning: #f59e0b;
+  --warning-light: rgba(245,158,11,0.1);
+  --danger: #f04747;
+  --danger-light: rgba(240,71,71,0.1);
+  --purple: #8b5cf6;
+  --purple-light: rgba(139,92,246,0.1);
+  --t: 0.22s cubic-bezier(0.4,0,0.2,1);
+}
+[data-theme="light"] {
+  --bg: #f0f4fb;
+  --sidebar: #ffffff;
+  --card: #ffffff;
+  --card2: #f4f7fc;
+  --border: rgba(0,0,0,0.07);
+  --border2: rgba(0,0,0,0.12);
+  --text: #0d1220;
+  --text2: #4a5270;
+  --text3: #9aa0b8;
+  --accent: #1a6de0;
+  --accent2: #1558b8;
+  --accent-glow: rgba(26,109,224,0.15);
+  --accent-light: rgba(26,109,224,0.08);
+}
+
+html, body { height: 100%; font-family: 'Montserrat', sans-serif; background: var(--bg); color: var(--text); }
+
+/* GOV BAR */
+.gov-bar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 300;
+  background: linear-gradient(90deg, #0a1628 0%, #0d1e3a 40%, #0f2248 100%);
+  border-bottom: 1px solid rgba(26,109,224,0.2);
+  height: 38px; display: flex; align-items: center; padding: 0 24px;
+  box-shadow: 0 2px 20px rgba(0,0,0,0.4);
+}
+[data-theme="light"] .gov-bar { background: linear-gradient(90deg, #0d2151, #163272, #1a3d8a); }
+.gov-inner { display: flex; align-items: center; gap: 16px; width: 100%; }
+.flag { width: 24px; height: 16px; border-radius: 2px; overflow: hidden; display: flex; flex-direction: column; flex-shrink: 0; box-shadow: 0 1px 4px rgba(0,0,0,0.4); }
+.f1 { flex:1; background:#cf0000; } .f2 { flex:1; background:#ffd700; } .f3 { flex:1; background:#003087; }
+.gov-name { font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.8); white-space: nowrap; }
+.gov-name strong { color: #fff; }
+.gov-sep { width: 1px; height: 18px; background: rgba(255,255,255,0.15); }
+.gov-min { font-size: 10.5px; color: rgba(255,255,255,0.55); }
+.gov-min strong { color: rgba(255,255,255,0.8); font-weight: 600; }
+
+/* LAYOUT */
+.layout { display: flex; min-height: 100vh; padding-top: 38px; }
+
+/* SIDEBAR */
+.sidebar {
+  width: 240px; flex-shrink: 0;
+  background: var(--sidebar);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  position: fixed; top: 38px; left: 0; bottom: 0;
+  z-index: 100; overflow-y: auto;
+  transition: transform var(--t);
+}
+.sidebar-logo {
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 10px;
+}
+.sidebar-logo-icon {
+  width: 34px; height: 34px;
+  background: linear-gradient(135deg, var(--accent), #5ba4f5);
+  border-radius: 8px; display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 12px var(--accent-glow); flex-shrink: 0;
+}
+.sidebar-logo-icon svg { width: 18px; height: 18px; }
+.sidebar-logo-text { display: flex; flex-direction: column; }
+.sidebar-logo-title { font-size: 13px; font-weight: 800; color: var(--text); letter-spacing: -0.3px; }
+.sidebar-logo-sub { font-size: 10px; color: var(--text3); font-weight: 500; margin-top: 1px; text-transform: uppercase; letter-spacing: 0.3px; }
+
+.sidebar-section { padding: 16px 12px 8px; }
+.sidebar-section-label { font-size: 10px; font-weight: 700; color: var(--text3); letter-spacing: 1px; text-transform: uppercase; padding: 0 8px; margin-bottom: 6px; }
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 8px; border-radius: 8px; cursor: pointer;
+  color: var(--text2); font-size: 13px; font-weight: 500;
+  transition: all var(--t); text-decoration: none; margin-bottom: 2px;
+  position: relative;
+}
+.nav-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+.nav-item:hover { background: var(--accent-light); color: var(--accent2); }
+.nav-item.active { background: var(--accent-light); color: var(--accent2); font-weight: 600; }
+.nav-item.active::before { content: ''; position: absolute; left: 0; top: 20%; bottom: 20%; width: 3px; background: var(--accent); border-radius: 0 3px 3px 0; }
+.nav-badge { margin-left: auto; background: var(--danger); color: #fff; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 50px; }
+
+.sidebar-footer {
+  margin-top: auto; padding: 16px 12px;
+  border-top: 1px solid var(--border);
+}
+.user-card {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px; border-radius: 10px;
+  background: var(--card2); border: 1px solid var(--border);
+}
+.user-avatar {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), #5ba4f5);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700; color: #fff; flex-shrink: 0;
+}
+.user-info { flex: 1; min-width: 0; }
+.user-name { font-size: 12px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.user-role { font-size: 10px; color: var(--text3); font-weight: 500; margin-top: 1px; text-transform: uppercase; letter-spacing: 0.3px; }
+.logout-btn { background: none; border: none; cursor: pointer; color: var(--text3); padding: 4px; display: flex; transition: color var(--t); }
+.logout-btn:hover { color: var(--danger); }
+.logout-btn svg { width: 14px; height: 14px; }
+
+/* MAIN CONTENT */
+.main { margin-left: 240px; flex: 1; display: flex; flex-direction: column; min-height: calc(100vh - 38px); }
+
+/* TOPBAR */
+.topbar {
+  background: var(--card); border-bottom: 1px solid var(--border);
+  padding: 0 28px; height: 60px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 38px; z-index: 50;
+}
+.topbar-left { display: flex; flex-direction: column; }
+.topbar-title { font-size: 16px; font-weight: 800; color: var(--text); letter-spacing: -0.4px; }
+.topbar-sub { font-size: 12px; color: var(--text3); font-weight: 400; margin-top: 1px; }
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+.theme-pill {
+  background: var(--card2); border: 1px solid var(--border2);
+  border-radius: 50px; padding: 7px 14px;
+  display: flex; align-items: center; gap: 7px;
+  cursor: pointer; color: var(--text2);
+  font-size: 11.5px; font-weight: 600; font-family: 'Montserrat', sans-serif;
+  transition: all var(--t);
+}
+.theme-pill:hover { border-color: var(--accent); color: var(--accent); }
+.theme-pill svg { width: 13px; height: 13px; }
+.status-dot { display: flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 600; color: var(--success); }
+.status-dot::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--success); animation: blink 2s ease-in-out infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+/* PAGE CONTENT */
+.page { padding: 28px; }
+
+/* METRIC CARDS */
+.metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+.metric-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 14px; padding: 20px;
+  display: flex; flex-direction: column; gap: 12px;
+  transition: all var(--t); cursor: default;
+  position: relative; overflow: hidden;
+}
+.metric-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: var(--metric-color, var(--accent));
+  border-radius: 14px 14px 0 0;
+}
+.metric-card:hover { border-color: var(--border2); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.2); }
+.metric-top { display: flex; align-items: flex-start; justify-content: space-between; }
+.metric-icon {
+  width: 38px; height: 38px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--metric-bg, var(--accent-light));
+}
+.metric-icon svg { width: 18px; height: 18px; color: var(--metric-color, var(--accent)); }
+.metric-trend { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 50px; }
+.trend-up { background: var(--success-light); color: var(--success); }
+.trend-neutral { background: var(--warning-light); color: var(--warning); }
+.metric-value { font-size: 28px; font-weight: 800; color: var(--text); letter-spacing: -1px; line-height: 1; }
+.metric-label { font-size: 12px; font-weight: 500; color: var(--text2); }
+.metric-sub { font-size: 11px; color: var(--text3); }
+
+/* CHARTS ROW */
+.charts-row { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 24px; }
+.chart-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 14px; padding: 20px;
+}
+.chart-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+.chart-title { font-size: 13px; font-weight: 700; color: var(--text); letter-spacing: -0.2px; }
+.chart-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+.chart-badge { font-size: 10.5px; font-weight: 600; padding: 4px 10px; border-radius: 50px; background: var(--accent-light); color: var(--accent2); }
+.chart-wrap { position: relative; height: 200px; }
+
+/* BOTTOM ROW */
+.bottom-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.table-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 20px; }
+.table-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.table-title { font-size: 13px; font-weight: 700; color: var(--text); }
+.btn-sm {
+  font-size: 11px; font-weight: 600; padding: 6px 14px;
+  border-radius: 8px; border: 1px solid var(--border2);
+  background: var(--card2); color: var(--text2); cursor: pointer;
+  font-family: 'Montserrat', sans-serif; transition: all var(--t);
+}
+.btn-sm:hover { border-color: var(--accent); color: var(--accent); }
+
+/* TABLE */
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table th { font-size: 10px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; padding: 0 0 10px; text-align: left; border-bottom: 1px solid var(--border); }
+.data-table td { font-size: 12px; font-weight: 500; color: var(--text2); padding: 10px 0; border-bottom: 1px solid var(--border); }
+.data-table tr:last-child td { border-bottom: none; }
+.data-table td:first-child { color: var(--text); font-weight: 600; }
+.status-pill { display: inline-flex; align-items: center; gap: 4px; font-size: 10.5px; font-weight: 600; padding: 3px 8px; border-radius: 50px; }
+.pill-ok { background: var(--success-light); color: var(--success); }
+.pill-warn { background: var(--warning-light); color: var(--warning); }
+.pill-err { background: var(--danger-light); color: var(--danger); }
+
+/* ALERTS */
+.alert-list { display: flex; flex-direction: column; gap: 8px; }
+.alert-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 12px; border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--card2);
+  transition: all var(--t);
+}
+.alert-item:hover { border-color: var(--border2); }
+.alert-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+.dot-warn { background: var(--warning); box-shadow: 0 0 6px var(--warning); }
+.dot-err { background: var(--danger); box-shadow: 0 0 6px var(--danger); }
+.dot-ok { background: var(--success); box-shadow: 0 0 6px var(--success); }
+.alert-text { font-size: 12px; font-weight: 500; color: var(--text2); line-height: 1.4; }
+.alert-text strong { color: var(--text); font-weight: 600; }
+.alert-time { font-size: 10.5px; color: var(--text3); margin-top: 3px; }
+
+/* EMPTY STATE */
+.empty { text-align: center; padding: 32px; color: var(--text3); font-size: 13px; }
+.empty svg { width: 36px; height: 36px; margin: 0 auto 10px; display: block; opacity: 0.4; }
+
+@media (max-width: 1100px) { .metrics-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 900px) { .charts-row, .bottom-row { grid-template-columns: 1fr; } .sidebar { transform: translateX(-100%); } .main { margin-left: 0; } }
+</style>
+</head>
+<body>
+
+<!-- GOV BAR -->
+<div class="gov-bar">
+  <div class="gov-inner">
+    <div class="flag"><div class="f1"></div><div class="f2"></div><div class="f3"></div></div>
+    <span class="gov-name">Gobierno <strong>Bolivariano</strong> de Venezuela</span>
+    <div class="gov-sep"></div>
+    <span class="gov-min">Ministerio del Poder Popular para la <strong>Energía Eléctrica</strong></span>
+  </div>
+</div>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+        </svg>
+      </div>
+      <div class="sidebar-logo-text">
+        <span class="sidebar-logo-title">Corpoelec</span>
+        <span class="sidebar-logo-sub">Sistema de Lecturas</span>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Principal</div>
+      <a class="nav-item active" href="dashboard.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        Dashboard
+      </a>
+      <a class="nav-item" href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Clientes
+      </a>
+      <a class="nav-item" href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-4 0v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
+        Medidores
+      </a>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Operaciones</div>
+      <a class="nav-item" href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Lecturas
+        <span class="nav-badge">3</span>
+      </a>
+      <a class="nav-item" href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Simulaciones
+      </a>
+      <a class="nav-item" href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        Reportes
+      </a>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Sistema</div>
+      <a class="nav-item" href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+        Configuración
+      </a>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="user-avatar" id="userAvatar">M</div>
+        <div class="user-info">
+          <div class="user-name" id="userName">Técnico</div>
+          <div class="user-role" id="userRole">Admin</div>
+        </div>
+        <button class="logout-btn" onclick="logout()" title="Cerrar sesión">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <span class="topbar-title">Panel de Control</span>
+        <span class="topbar-sub" id="dateLabel">Cargando...</span>
+      </div>
+      <div class="topbar-right">
+        <span class="status-dot">Sistema activo</span>
+        <button class="theme-pill" onclick="toggleTheme()">
+          <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+            <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+          </svg>
+          <span id="themeLabel">Modo claro</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- PAGE -->
+    <div class="page">
+
+      <!-- METRICS -->
+      <div class="metrics-grid">
+        <div class="metric-card" style="--metric-color:#1a6de0;--metric-bg:rgba(26,109,224,0.1)">
+          <div class="metric-top">
+            <div class="metric-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </div>
+            <span class="metric-trend trend-up">+12%</span>
+          </div>
+          <div class="metric-value" id="totalClientes">--</div>
+          <div class="metric-label">Clientes Registrados</div>
+          <div class="metric-sub">Residenciales y comerciales</div>
+        </div>
+
+        <div class="metric-card" style="--metric-color:#2ecc71;--metric-bg:rgba(46,204,113,0.1)">
+          <div class="metric-top">
+            <div class="metric-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-4 0v2"/></svg>
+            </div>
+            <span class="metric-trend trend-up">+5%</span>
+          </div>
+          <div class="metric-value" id="totalMedidores">--</div>
+          <div class="metric-label">Medidores Activos</div>
+          <div class="metric-sub">En servicio actualmente</div>
+        </div>
+
+        <div class="metric-card" style="--metric-color:#f59e0b;--metric-bg:rgba(245,158,11,0.1)">
+          <div class="metric-top">
+            <div class="metric-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            </div>
+            <span class="metric-trend trend-neutral">Este mes</span>
+          </div>
+          <div class="metric-value" id="totalLecturas">--</div>
+          <div class="metric-label">Lecturas del Mes</div>
+          <div class="metric-sub">Registradas por técnicos</div>
+        </div>
+
+        <div class="metric-card" style="--metric-color:#8b5cf6;--metric-bg:rgba(139,92,246,0.1)">
+          <div class="metric-top">
+            <div class="metric-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </div>
+            <span class="metric-trend trend-up">+3</span>
+          </div>
+          <div class="metric-value" id="totalSimulaciones">--</div>
+          <div class="metric-label">Simulaciones</div>
+          <div class="metric-sub">Validaciones realizadas</div>
+        </div>
+      </div>
+
+      <!-- CHARTS -->
+      <div class="charts-row">
+        <div class="chart-card">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">Consumo Energético Mensual</div>
+              <div class="chart-sub">Promedio en kWh por mes · Año 2025</div>
+            </div>
+            <span class="chart-badge">kWh</span>
+          </div>
+          <div class="chart-wrap">
+            <canvas id="consumoChart"></canvas>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">Tipo de Clientes</div>
+              <div class="chart-sub">Distribución actual</div>
+            </div>
+          </div>
+          <div class="chart-wrap">
+            <canvas id="tipoChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- BOTTOM -->
+      <div class="bottom-row">
+
+        <div class="table-card">
+          <div class="table-header">
+            <span class="table-title">Últimas Lecturas Registradas</span>
+            <button class="btn-sm">Ver todas</button>
+          </div>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Medidor</th>
+                <th>Cliente</th>
+                <th>kWh</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody id="lecturasTable">
+              <tr><td colspan="4"><div class="empty">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                Sin lecturas registradas aún
+              </div></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="table-card">
+          <div class="table-header">
+            <span class="table-title">Alertas del Sistema</span>
+            <button class="btn-sm">Ver todas</button>
+          </div>
+          <div class="alert-list">
+            <div class="alert-item">
+              <div class="alert-dot dot-ok"></div>
+              <div>
+                <div class="alert-text"><strong>Sistema operativo</strong> — Todos los servicios funcionando correctamente.</div>
+                <div class="alert-time">Hace 2 minutos</div>
+              </div>
+            </div>
+            <div class="alert-item">
+              <div class="alert-dot dot-warn"></div>
+              <div>
+                <div class="alert-text"><strong>Base de datos lista</strong> — Corpoelec DB conectada y activa.</div>
+                <div class="alert-time">Al iniciar sesión</div>
+              </div>
+            </div>
+            <div class="alert-item">
+              <div class="alert-dot dot-ok"></div>
+              <div>
+                <div class="alert-text"><strong>Autenticación JWT</strong> — Sesión activa y cifrada correctamente.</div>
+                <div class="alert-time">Al iniciar sesión</div>
+              </div>
+            </div>
+            <div class="alert-item">
+              <div class="alert-dot dot-warn"></div>
+              <div>
+                <div class="alert-text"><strong>Sin lecturas</strong> — No hay lecturas registradas este mes aún.</div>
+                <div class="alert-time">Estado actual</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+const API_URL = 'http://127.0.0.1:5000/api';
+
+// Auth guard
+const token = localStorage.getItem('token');
+const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
+if (!token) window.location.href = 'login.html';
+
+// User info
+document.getElementById('userName').textContent = `${usuario.nombre || ''} ${usuario.apellido || ''}`.trim() || 'Técnico';
+document.getElementById('userRole').textContent = usuario.rol === 'admin' ? 'Administrador' : 'Técnico';
+document.getElementById('userAvatar').textContent = (usuario.nombre || 'T')[0].toUpperCase();
+
+// Date
+const now = new Date();
+document.getElementById('dateLabel').textContent = now.toLocaleDateString('es-VE', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+
+// Theme
+function toggleTheme() {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
+  document.getElementById('themeLabel').textContent = isDark ? 'Modo oscuro' : 'Modo claro';
+  updateIcon(!isDark);
+  localStorage.setItem('theme', isDark ? 'light' : 'dark');
+  updateCharts();
+}
+function updateIcon(isDark) {
+  document.getElementById('themeIcon').innerHTML = isDark
+    ? `<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>`
+    : `<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>`;
+}
+const saved = localStorage.getItem('theme') || 'dark';
+document.documentElement.setAttribute('data-theme', saved);
+document.getElementById('themeLabel').textContent = saved === 'dark' ? 'Modo claro' : 'Modo oscuro';
+updateIcon(saved === 'dark');
+
+// Logout
+function logout() {
+  localStorage.removeItem('token');
+  localStorage.removeItem('usuario');
+  window.location.href = 'login.html';
+}
+
+// Load metrics from API
+async function loadMetrics() {
+  const headers = { 'Authorization': `Bearer ${token}` };
+  try {
+    // For now show demo data since modules are being built
+    document.getElementById('totalClientes').textContent = '0';
+    document.getElementById('totalMedidores').textContent = '0';
+    document.getElementById('totalLecturas').textContent = '0';
+    document.getElementById('totalSimulaciones').textContent = '0';
+  } catch(e) {
+    console.log('Cargando métricas...');
+  }
+}
+loadMetrics();
+
+// Charts
+let consumoChart, tipoChart;
+
+function getChartColors() {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  return {
+    grid: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.06)',
+    text: isDark ? '#7c849e' : '#4a5270',
+    bg: isDark ? '#111827' : '#ffffff'
+  };
+}
+
+function buildCharts() {
+  const c = getChartColors();
+  Chart.defaults.font.family = 'Montserrat';
+
+  // Consumo chart
+  const ctx1 = document.getElementById('consumoChart').getContext('2d');
+  const gradient = ctx1.createLinearGradient(0, 0, 0, 200);
+  gradient.addColorStop(0, 'rgba(26,109,224,0.3)');
+  gradient.addColorStop(1, 'rgba(26,109,224,0)');
+
+  consumoChart = new Chart(ctx1, {
+    type: 'line',
+    data: {
+      labels: ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'],
+      datasets: [{
+        label: 'Consumo kWh',
+        data: [180, 220, 195, 240, 210, 265, 290, 275, 230, 245, 215, 200],
+        borderColor: '#1a6de0',
+        backgroundColor: gradient,
+        borderWidth: 2.5,
+        pointBackgroundColor: '#1a6de0',
+        pointRadius: 4,
+        pointHoverRadius: 6,
+        tension: 0.4, fill: true
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false, backgroundColor: '#1e2a40', titleColor: '#eef0f7', bodyColor: '#7c849e', borderColor: '#1a6de0', borderWidth: 1, padding: 10 } },
+      scales: {
+        x: { grid: { color: c.grid }, ticks: { color: c.text, font: { size: 11, weight: '600' } } },
+        y: { grid: { color: c.grid }, ticks: { color: c.text, font: { size: 11 }, callback: v => v + ' kWh' } }
+      }
+    }
+  });
+
+  // Tipo chart
+  const ctx2 = document.getElementById('tipoChart').getContext('2d');
+  tipoChart = new Chart(ctx2, {
+    type: 'doughnut',
+    data: {
+      labels: ['Residencial', 'Comercial'],
+      datasets: [{
+        data: [68, 32],
+        backgroundColor: ['#1a6de0', '#8b5cf6'],
+        borderColor: c.bg,
+        borderWidth: 3,
+        hoverOffset: 6
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      cutout: '72%',
+      plugins: {
+        legend: { position: 'bottom', labels: { color: c.text, font: { size: 11, weight: '600' }, padding: 16, usePointStyle: true, pointStyleWidth: 8 } },
+        tooltip: { backgroundColor: '#1e2a40', titleColor: '#eef0f7', bodyColor: '#7c849e', borderColor: '#1a6de0', borderWidth: 1, padding: 10 }
+      }
+    }
+  });
+}
+
+function updateCharts() {
+  const c = getChartColors();
+  if (consumoChart) {
+    consumoChart.options.scales.x.grid.color = c.grid;
+    consumoChart.options.scales.x.ticks.color = c.text;
+    consumoChart.options.scales.y.grid.color = c.grid;
+    consumoChart.options.scales.y.ticks.color = c.text;
+    consumoChart.update();
+  }
+  if (tipoChart) {
+    tipoChart.data.datasets[0].borderColor = c.bg;
+    tipoChart.options.plugins.legend.labels.color = c.text;
+    tipoChart.update();
+  }
+}
+
+buildCharts();
+</script>
+</body>
+</html>
